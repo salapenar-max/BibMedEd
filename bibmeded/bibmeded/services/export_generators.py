@@ -196,10 +196,46 @@ def _screening_stage_lines(exclusion_summary: ExclusionSummary | None) -> list[s
     return lines
 
 
+def _yes_no(value: bool) -> str:
+    return "yes" if value else "no"
+
+
+def _lotka_lines(lotka: dict) -> list[str]:
+    """Author productivity step: method, parameters and the fit or the reason it is missing."""
+    params = lotka["parameters"]
+    lines = [
+        "AUTHOR PRODUCTIVITY (Lotka's law)",
+        f"  Method: {lotka['method']}",
+        f"  Parameters: {params['counting']} counting over included records; "
+        f"at least {params['min_productivity_levels']} productivity levels; "
+        f"K-S critical value {params['ks_coefficient']}/sqrt(N), used only above {params['ks_min_authors'] - 1} authors",
+        f"  Authors: {lotka['total_authors']} across {lotka['productivity_levels']} productivity levels",
+    ]
+    fit = lotka["fit"]
+    if fit is None:
+        lines.extend([f"  Fit: not computed. {lotka['reason']}", ""])
+        return lines
+    lines.append(f"  Fit: alpha = {fit['alpha']}, C = {fit['C']}, R^2 = {fit['r_squared']}")
+    gof = fit["goodness_of_fit"]
+    if gof["D"] is None:
+        lines.append(f"  Kolmogorov-Smirnov: not computed. {gof['reason']}")
+    elif gof["critical_value"] is None:
+        lines.append(f"  Kolmogorov-Smirnov: D = {gof['D']}, no verdict. {gof['reason']}")
+    else:
+        lines.append(
+            f"  Kolmogorov-Smirnov: D = {gof['D']}, critical value = {gof['critical_value']} "
+            f"at the {gof['significance_level']} level; "
+            f"consistent with Lotka's law: {_yes_no(gof['consistent_with_lotka'])}"
+        )
+    lines.append("")
+    return lines
+
+
 def generate_methodology(
     project_name: str,
     steps: list[MethodologyStep],
     exclusion_summary: ExclusionSummary | None = None,
+    author_productivity: dict | None = None,
 ) -> str:
     lines = [
         f'METHODOLOGY LOG — Project: "{project_name}"',
@@ -297,6 +333,8 @@ def generate_methodology(
     lines.append("FINAL DATASET")
     lines.append(f"  Studies included: {studies_included}")
     lines.append("")
+    if author_productivity is not None:
+        lines.extend(_lotka_lines(author_productivity))
     return "\n".join(lines)
 
 
@@ -315,6 +353,7 @@ def generate_bundle(
     pubs: list[Publication],
     steps: list[MethodologyStep],
     exclusion_summary: ExclusionSummary | None = None,
+    author_productivity: dict | None = None,
 ) -> bytes:
     """Produce a single .zip containing CSV, RIS, JSON, methodology .txt, PRISMA .svg, and a manifest."""
     stamp = date.today().isoformat()
@@ -327,7 +366,7 @@ def generate_bundle(
         zf.writestr(f"{slug}-{stamp}.csv", generate_csv(pubs))
         zf.writestr(f"{slug}-{stamp}.ris", generate_ris(pubs))
         zf.writestr(f"{slug}-{stamp}.json", generate_json(project_name, pubs))
-        zf.writestr(f"{slug}-methodology-{stamp}.txt", generate_methodology(project_name, steps, exclusion_summary))
+        zf.writestr(f"{slug}-methodology-{stamp}.txt", generate_methodology(project_name, steps, exclusion_summary, author_productivity))
         zf.writestr(f"{slug}-prisma-{stamp}.svg", generate_prisma_svg(project_name, steps, exclusion_summary, included_count=included_count))
         manifest = (
             f"BibMedEd export bundle\n"
