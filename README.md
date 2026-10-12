@@ -57,7 +57,7 @@
 - **Interactive visualizations** — D3.js co-authorship and keyword co-occurrence network graphs
 - **Reproducible methodology** — Every pipeline step logged, exportable as a citable `.txt` for your Methods section
 - **First-run onboarding** — One-click synthetic sample project for instant, network-free access to analyses and visualizations
-- **Standard exports** — .RIS (Zotero/EndNote), .CSV (Excel/Sheets), versioned .JSON, methodology log, PRISMA 2020 flow diagram (.svg), and a single-click `.zip` bundle of all five
+- **Standard exports** — .RIS (Zotero/EndNote), .CSV (Excel/Sheets), Web of Science plain text (VOSviewer/Bibliometrix), versioned .JSON, methodology log, PRISMA 2020 flow diagram (.svg), and a single-click `.zip` bundle of all six
 - **Programmatic access** — Auto-generated OpenAPI spec at `/openapi.json`, interactive Swagger UI at `/docs`, ReDoc at `/redoc`. Analysis responses carry a `schema_version` field for downstream pinning.
 - **Self-hostable** — Single `docker compose up` on any lab server, no cloud account needed
 - **Result cap** — Default 2,000 records (configurable up to 10,000); results page warns when upstream returned more than was fetched so truncation is never silent
